@@ -1,8 +1,11 @@
 package Util;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class RSAPublicKey {
+public class RSAPublicKey implements Serializable{
+
+	private static final long serialVersionUID = 1978638915783625707L;
 
 	private BigInteger m,n,e;
 
