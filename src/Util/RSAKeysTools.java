@@ -19,17 +19,18 @@ public class RSAKeysTools {
 		do {
 			q = BigInteger.probablePrime(BITLENGTH, new Random());
 		} while (p.compareTo(q) == 0);
-
+		p = new BigInteger("53");
+		q = new BigInteger("97");
 		BigInteger n = p.multiply(q);
 		BigInteger m = (p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)));
 
 		// Calcul le plus petit nombre premier entre doit etre impaire, > a 1, <
 		// calcul avec le PGCD
-//		BigInteger e = new BigInteger("3");
 		BigInteger e = new BigInteger(32,new Random());
-		while ((m.gcd(e).compareTo(BigInteger.ONE) == 0) && (e.compareTo(m) != 0)) {
-//			e = e.add(BigInteger.ONE.add(BigInteger.ONE));
+		while ( (m.gcd(e).compareTo(BigInteger.ONE) != 0) && (e.compareTo(m) != 0)) {
 			e = new BigInteger(32,new Random());
+			if (e.mod(TWO).compareTo(BigInteger.ZERO) == 0)
+				e=e.add(BigInteger.ONE);
 		}
 
 		// si pas de nombre premier avec alors on retente sa chance ;-)
@@ -40,7 +41,6 @@ public class RSAKeysTools {
 	}
 
 	public static RSAPrivateKey buildPrivatesKey(RSAPublicKey pub) {
-//		pub = new RSAPublicKey(new BigInteger("4992"), new BigInteger("5141"), new BigInteger("7"));
 		Couple c = extendEuclide(pub);
 
 		BigInteger k = BigInteger.ZERO;
@@ -49,7 +49,7 @@ public class RSAKeysTools {
 			k = k.subtract(BigInteger.ONE);
 			tmp = c.u.subtract(k.multiply(pub.getM()));
 		}
-		return new RSAPrivateKey(c.size, tmp);
+		return new RSAPrivateKey(pub.getN(), tmp);
 	}
 
 	private static Couple extendEuclide(RSAPublicKey pub) {

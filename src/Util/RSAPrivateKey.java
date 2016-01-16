@@ -7,20 +7,20 @@ public class RSAPrivateKey implements Serializable {
 
 	private static final long serialVersionUID = 1554968680635154995L;
 	
-	private Integer n;
-	private BigInteger e;
+	private BigInteger n;
+	private BigInteger u;
 
-	public RSAPrivateKey(Integer n, BigInteger e) {
+	public RSAPrivateKey(BigInteger n, BigInteger u) {
 		this.n = n;
-		this.e = e;
+		this.u = u;
 	}
 
-	public Integer getN() {
+	public BigInteger getN() {
 		return this.n;
 	}
 
-	public BigInteger getE() {
-		return this.e;
+	public BigInteger getU() {
+		return this.u;
 	}
 
 }
