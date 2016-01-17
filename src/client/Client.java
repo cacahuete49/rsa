@@ -1,15 +1,12 @@
 package client;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintStream;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 
 import Util.Codec;
@@ -23,52 +20,60 @@ public class Client {
 
 	private static RSAPrivateKey priv;
 
-	static List<RSAPublicKey> autorizedKey = new ArrayList<RSAPublicKey>();
-	
-	public static void readSomething(ObjectInputStream ois) {
+	private static RSAPublicKey autorizedKey;
+
+	public void sendMessage(ObjectOutputStream oos, String message) throws IOException {
+		List<BigInteger> encodeMessage = Codec.encode(message, pub);
+		oos.writeObject(encodeMessage);
+	}
+
+	public static void readSomething(ObjectInputStream ois) throws IOException {
 		try {
 			Object o = ois.readObject();
 			if (o instanceof RSAPublicKey) {
-				autorizedKey.add((RSAPublicKey) o);
+				autorizedKey=(RSAPublicKey) o;
+			} else if (o instanceof List<?>) {
+				// byte[] tmp = Codec.decode((List<BigInteger>) o, priv);
+				// String message = Codec.convertAsciiToString(tmp);
+				String message = Codec.decodeToString((List<BigInteger>) o, priv);
+				System.out.println("Client read:" + message);
 			}
-		} catch (ClassNotFoundException | IOException e) {
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		// System.out.println("serveur read something");
 	}
 
-	public static void main(String[] arg) {
+	public static void main(String[] arg) throws IOException {
 
 		pub = RSAKeysTools.buildPublicKey();
-		
+
 		priv = RSAKeysTools.buildPrivatesKey(pub);
 
 		int portEcouteServeur = 10302;
-		BufferedReader lecteurFichier;
-		BufferedReader entree;
-		PrintStream sortie;
-		String ligne;
-		Socket socket;
+		Socket socket = null;
 		String adresse = null;
 
 		try {
-			//Alice
+			// Alice
 			socket = new Socket(adresse, portEcouteServeur);
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 
 			// send
 			oos.writeObject(pub);
-			
+
 			// read
 			readSomething(ois);
-			
+
 			String message = "Bonjour !";
-			//send message
-			byte[] array = Codec.convertStringToAscii(message);
-			System.out.println("client send:"+ message);
-			oos.writeObject(Codec.encode(array, autorizedKey.get(0)));
-			
-			socket.close();
+			// send message
+			// byte[] array = Codec.convertStringToAscii(message);
+			// oos.writeObject(Codec.encode(array, autorizedKey.get(0)));
+			oos.writeObject(Codec.encode(message, autorizedKey));
+			while (true) {
+				readSomething(ois);
+			}
 		} catch (FileNotFoundException exc) {
 			System.out.println("Fichier introuvable");
 		} catch (UnknownHostException exc) {
@@ -76,6 +81,8 @@ public class Client {
 		} catch (IOException exc) {
 			System.out.println("Probleme d'entree-sortie");
 			exc.printStackTrace();
+		} finally {
+			socket.close();
 		}
 	}
 }
